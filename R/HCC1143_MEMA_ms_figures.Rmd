@@ -1,5 +1,5 @@
 ---
-title: "HCC1143_MEMA_ms_figures"
+title: "HCC1143 MEMA ms figures"
 author: "Mark Dane"
 date: "`r Sys.Date()`"
 output: html_document
@@ -15,7 +15,7 @@ library(ComplexHeatmap)
 
 ```{r readData, echo=FALSE}
 path <- "data"
-l3_filenames <- dir("../data", "level_3", full.names = TRUE)
+l3_filenames <- dir("../../data", "level_3", full.names = TRUE)
 
 l3 <- map_df(l3_filenames, read_csv, show_col_types = FALSE) %>%
   mutate(serum = case_when(Barcode %in% paste0("LI8V0117", 1:9) ~"low", #low serum 
@@ -32,7 +32,156 @@ l3 <- map_df(l3_filenames, read_csv, show_col_types = FALSE) %>%
 
 Heatmaps of cell number and EdU positive proportions with ligand and ECM on the axes.
 
-```{r cell_count_heatmap}
+```{r low_serum_heatmap}
+
+meps <- l3 %>%
+  filter(study == "low_none") %>%
+  group_by(Ligand, ECMp) %>%
+  select(Ligand, ECMp, Spot_PA_SpotCellCount) %>%
+  mutate(Spot_PA_SpotCellCount = log2(Spot_PA_SpotCellCount)) %>%
+  summarise_all(.funs = median) %>%
+  ungroup() %>%
+  pivot_wider(names_from = Ligand,
+              values_from = Spot_PA_SpotCellCount,
+              values_fill = 0)
+
+meps_dm <- meps %>%
+  select(-ECMp) %>%
+  as.matrix()
+rownames(meps_dm) <- meps$ECMp
+
+hm_ls_SCC <- Heatmap(
+  meps_dm,
+  name = "Spot Cell Count\n(log2)",
+  column_title = "Low Serum Treated Spot Cell Counts",
+  column_title_gp = gpar(fontsize = 12),
+  cluster_rows = TRUE,
+  #row_km = 7,
+  row_gap = unit(2, "mm"),
+  row_title = " ",
+  show_row_names = TRUE,
+  cluster_columns = TRUE,
+  #column_km = 8,
+  show_column_names = TRUE,
+  row_names_gp = gpar(fontsize = 6),
+  column_names_gp = gpar(fontsize = 6),
+  use_raster = FALSE
+)
+hm_ls_SCC
+
+#create EdU positive Proportion heatmap
+meps <- l3 %>%
+  filter(study == "low_none") %>%
+  group_by(Ligand, ECMp) %>%
+  select(Ligand, ECMp, Nuclei_PA_Gated_EdUPositiveProportionNorm) %>%
+  summarise_all(.funs = median) %>%
+  ungroup() %>%
+  pivot_wider(
+    names_from = Ligand,
+    values_from = Nuclei_PA_Gated_EdUPositiveProportionNorm,
+    values_fill = min(l3$Nuclei_PA_Gated_EdUPositiveProportionNorm)
+  ) #fill in the smallest value for meps that did not grow any cells
+
+meps_dm <- meps %>%
+  select(-ECMp) %>%
+  as.matrix()
+rownames(meps_dm) <- meps$ECMp
+
+hm_ls_EdUPP <- Heatmap(
+  meps_dm,
+  name = "EdU Positive\nProportion\n(Normalized)",
+  column_title = "Low Serum EdU Positive Proportions",
+  cluster_rows = TRUE,
+  #row_km = 7,
+  row_gap = unit(2, "mm"),
+  row_title = " ",
+  show_row_names = TRUE,
+  cluster_columns = TRUE,
+  #column_km = 8,
+  show_column_names = TRUE,
+  row_names_gp = gpar(fontsize = 6),
+  column_names_gp = gpar(fontsize = 6),
+  use_raster = FALSE
+)
+hm_ls_EdUPP
+```
+
+
+```{r high_serum_heatmap}
+
+meps <- l3 %>%
+  filter(study == "high_none") %>%
+  group_by(Ligand, ECMp) %>%
+  select(Ligand, ECMp, Spot_PA_SpotCellCount) %>%
+  mutate(Spot_PA_SpotCellCount = log2(Spot_PA_SpotCellCount)) %>%
+  summarise_all(.funs = median) %>%
+  ungroup() %>%
+  pivot_wider(names_from = Ligand,
+              values_from = Spot_PA_SpotCellCount,
+              values_fill = 0)
+
+meps_dm <- meps %>%
+  select(-ECMp) %>%
+  as.matrix()
+rownames(meps_dm) <- meps$ECMp
+
+hm_hs_SCC <- Heatmap(
+  meps_dm,
+  name = "Spot Cell Count\n(log2)",
+  column_title = "High Serum Treated Spot Cell Counts",
+  column_title_gp = gpar(fontsize = 12),
+  cluster_rows = TRUE,
+  #row_km = 7,
+  row_gap = unit(2, "mm"),
+  row_title = " ",
+  show_row_names = TRUE,
+  cluster_columns = TRUE,
+  #column_km = 8,
+  show_column_names = TRUE,
+  row_names_gp = gpar(fontsize = 6),
+  column_names_gp = gpar(fontsize = 6),
+  use_raster = FALSE
+)
+hm_hs_SCC
+
+#create EdU positive Proportion heatmap
+meps <- l3 %>%
+  filter(study == "high_none") %>%
+  group_by(Ligand, ECMp) %>%
+  select(Ligand, ECMp, Nuclei_PA_Gated_EdUPositiveProportionNorm) %>%
+  summarise_all(.funs = median) %>%
+  ungroup() %>%
+  pivot_wider(
+    names_from = Ligand,
+    values_from = Nuclei_PA_Gated_EdUPositiveProportionNorm,
+    values_fill = min(l3$Nuclei_PA_Gated_EdUPositiveProportionNorm)
+  ) #fill in the smallest value for meps that did not grow any cells
+
+meps_dm <- meps %>%
+  select(-ECMp) %>%
+  as.matrix()
+rownames(meps_dm) <- meps$ECMp
+
+hm_hs_EdUPP <- Heatmap(
+  meps_dm,
+  name = "EdU Positive\nProportion\n(Normalized)",
+  column_title = "High Serum EdU Positive Proportions",
+  cluster_rows = TRUE,
+  #row_km = 7,
+  row_gap = unit(2, "mm"),
+  row_title = " ",
+  show_row_names = TRUE,
+  cluster_columns = TRUE,
+  #column_km = 8,
+  show_column_names = TRUE,
+  row_names_gp = gpar(fontsize = 6),
+  column_names_gp = gpar(fontsize = 6),
+  use_raster = FALSE
+)
+hm_hs_EdUPP
+```
+
+```{r high_tram_heatmap}
 
 meps <- l3 %>%
   filter(study == "high_trametinib") %>%
@@ -50,7 +199,7 @@ meps_dm <- meps %>%
   as.matrix()
 rownames(meps_dm) <- meps$ECMp
 
-hm_SCC <- Heatmap(
+hm_ht_SCC <- Heatmap(
   meps_dm,
   name = "Spot Cell Count\n(log2)",
   column_title = "High Serum and Trametinib Treated Spot Cell Counts",
@@ -67,7 +216,8 @@ hm_SCC <- Heatmap(
   column_names_gp = gpar(fontsize = 6),
   use_raster = FALSE
 )
-hm_SCC
+hm_ht_SCC
+
 #create EdU positive Proportion heatmap
 meps <- l3 %>%
   filter(study == "high_trametinib") %>%
@@ -86,7 +236,7 @@ meps_dm <- meps %>%
   as.matrix()
 rownames(meps_dm) <- meps$ECMp
 
-hm_EdUPP <- Heatmap(
+hm_ht_EdUPP <- Heatmap(
   meps_dm,
   name = "EdU Positive\nProportion\n(Normalized)",
   column_title = "High Serum and Trametinib Treated EdU Positive Proportions",
@@ -102,12 +252,19 @@ hm_EdUPP <- Heatmap(
   column_names_gp = gpar(fontsize = 6),
   use_raster = FALSE
 )
-hm_EdUPP
-pdf("../figures/heatmaps.pdf",
+hm_ht_EdUPP
+```
+
+```{r print_save_heatmaps}
+pdf("../../figures/heatmaps.pdf",
     width = 8,
     height = 6)
-draw(hm_SCC)
-draw(hm_EdUPP)
+draw(hm_ls_SCC)
+draw(hm_ls_EdUPP)
+draw(hm_hs_SCC)
+draw(hm_hs_EdUPP)
+draw(hm_ht_SCC)
+draw(hm_ht_EdUPP)
 res <- dev.off()
 
 ```
@@ -148,11 +305,11 @@ return(ligand_boxplots_with_dots)
 
 lr_ligand_boxplots <- function(df){
   
-ligand_boxplots <- ggplot(df, aes(x=reorder(Ligand,lineage_ratio, FUN=median), y=lineage_ratio)) +
+ligand_boxplots <- ggplot(df, aes(x=reorder(Ligand,lineage_ratio, FUN=median), y=log(lineage_ratio))) +
   geom_boxplot(outlier.shape = NA, position = position_dodge2(preserve = "total"))+
-    coord_cartesian(ylim = c(0,4)) +
+    #coord_cartesian(ylim = c(0,7)) +
   labs(x = "", 
-       y="lineage ratio",
+       y="lineage ratio (log)",
        title=paste(unique(df$study),"KRT14 to VIM ratio by ligand"),
        fill="Paired with\nCol 1") +
   theme_bw()+
@@ -189,6 +346,12 @@ p_SCC_high_serum <- l3 %>%
    scc_ligand_boxplots_with_dots()
 p_SCC_high_serum
 
+p_SCC_high_tram <- l3 %>%
+  filter(study == "high_trametinib",
+         ECMp == "COL1") %>%
+   scc_ligand_boxplots_with_dots()
+p_SCC_high_tram
+
 p_lr_low_serum <- l3 %>%
   filter(study == "low_none",
          ECMp == "COL1") %>%
@@ -203,13 +366,22 @@ p_lr_high_serum <- l3 %>%
    lr_ligand_boxplots_with_dots()
 p_lr_high_serum
 
-pdf("../figures/boxplots.pdf",
+p_lr_high_tram <- l3 %>%
+  filter(study == "high_trametinib",
+         ECMp == "COL1") %>%
+  mutate(lineage_ratio = Cells_GT_KRT14_MeanIntensity/Cells_GT_VIM_MeanIntensity) %>%
+   lr_ligand_boxplots_with_dots()
+p_lr_high_tram
+
+pdf("../../figures/boxplots.pdf",
     width = 8,
     height = 6)
 print(p_SCC_low_serum)
 print(p_SCC_high_serum)
+print(p_SCC_high_tram)
 print(p_lr_low_serum)
 print(p_lr_high_serum)
+print(p_lr_high_tram)
 res <- dev.off()
 
 ```
